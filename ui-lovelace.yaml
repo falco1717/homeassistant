@@ -1,0 +1,195 @@
+title: Home
+sidebar:
+  date: true
+  dateFormat: dddd, MMMM Do
+  clock: false
+  digitalClock: true
+  twelveHourVersion: true
+  period: true
+  hideHassSidebar: true
+  hideTopMenu: true
+  showTopMenuOnMobile: true
+  width:
+    mobile: 0
+    tablet: 25
+    desktop: 18.5
+  breakpoints:
+    mobile: 768
+    tablet: 1024
+  sidebarMenu:
+    - action: navigate
+      navigation_path: /dashboard-test/home
+      name: Home
+      active: true
+      icon: mdi:home
+    - action: navigate
+      navigation_path: /dashboard-test/google
+      name: Google
+      active: true
+      icon: mdi:google
+    - action: navigate
+      navigation_path: /dashboard-test/lights
+      name: Lights
+      active: true
+      icon: mdi:lightbulb
+    - action: navigate
+      navigation_path: /sidebar-test/1st-Floor
+      name: 1st Floor
+      active: true
+      icon: mdi:floor-plan
+    - action: navigate
+      navigation_path: /dashboard-test/2nd-floor
+      name: 2nd Floor
+      active: true
+      icon: mdi:stairs-up
+    - action: navigate
+      navigation_path: /dashboard-test/media
+      name: Media
+      active: true
+      icon: mdi:television-play
+    - action: navigate
+      navigation_path: /dashboard-test/xmas
+      name: Xmas Lights
+      active: true
+      icon: mdi:pine-tree
+    - action: navigate
+      navigation_path: /sidebar-test/it
+      name: Admin/IT
+      active: true
+      icon: mdi:desktop-classic
+  template: |
+    <li>
+      {% if now().hour  < 5 %} Good night, {{ user }} {{'\U0001F634'}}
+      {% elif now().hour < 12 %} Good morning, {{ user }} {{'\u2615\uFE0F'}}
+      {% elif now().hour < 18 %} Good afternoon, {{ user }} {{'\U0001F44B\U0001F3FB'}}
+      {% else %} Good evening, {{ user }} {{'\U0001F44B\U0001F3FB'}}{% endif %}
+    </li> <li>
+      {% if expand(states.light)|
+         selectattr('state','eq','on')|
+         rejectattr('attributes.type','eq','browser_mod' )|rejectattr('attributes.friendly_name','search','Under') | list | count
+       == 1 %}
+        There is a light on
+       {% elif expand(states.light)|
+         selectattr('state','eq','on')|
+         rejectattr('attributes.type','eq','browser_mod' )|rejectattr('attributes.friendly_name','search','Under') | list | count
+       > 1 %}
+        There are {{ expand(states.light)|
+        selectattr('state','eq','on')|
+        rejectattr('attributes.type','eq','browser_mod' )|rejectattr('attributes.friendly_name','search','Under') | list | count
+         }} lights on
+       {% else %}
+        All lights are off
+      {% endif %}
+      {% if states.binary_sensor |
+         selectattr('state','eq','on')|selectattr('attributes.device_class', 'eq', 'door')|
+         rejectattr('attributes.friendly_name','eq','Visonic Door/Window Sensor contact' ) | list | count
+       == 1 %}
+        and a door open
+       {% elif states.binary_sensor |
+         selectattr('state','eq','on')|selectattr('attributes.device_class', 'eq', 'door')|
+         rejectattr('attributes.friendly_name','eq','Visonic Door/Window Sensor contact' ) | list | count
+       > 1 %}
+         and {{ states.binary_sensor |
+        selectattr('state','eq','on')|selectattr('attributes.device_class', 'eq', 'door')|
+        rejectattr('attributes.friendly_name','eq','Visonic Door/Window Sensor contact' ) | list | count
+         }} doors open
+       {% else %}
+        and all doors are closed
+      {% endif %}
+    </li>
+  bottomCard:
+    type: custom:weather-card
+    cardOptions:
+      number_of_forecasts: '5'
+      details: false
+      entity: weather.openweathermap
+views:
+  - path: home
+    title: Home
+    cards:
+      - type: entities
+        entities:
+          - person.falco1717
+      - type: grid
+        square: false
+        columns: 1
+        cards:
+          - type: media-control
+            entity: media_player.all
+          - type: media-control
+            entity: media_player.command_center_speaker_2
+          - type: media-control
+            entity: media_player.guest_bedroom_speaker
+          - type: media-control
+            entity: media_player.hallway_speaker
+          - type: media-control
+            entity: media_player.kitchen_display
+          - type: media-control
+            entity: media_player.living_room_tv
+          - type: media-control
+            entity: media_player.main_floor
+          - type: media-control
+            entity: media_player.master_bathroom_speaker
+          - type: media-control
+            entity: media_player.master_bedroom
+          - type: media-control
+            entity: media_player.master_bedroom_speaker
+          - type: media-control
+            entity: media_player.party
+          - type: media-control
+            entity: media_player.theater_tv
+          - type: media-control
+            entity: media_player.upstairs
+      - type: entities
+        entities:
+          - sensor.hacs
+        title: Sensor
+      - type: entities
+        entities:
+          - entity: sensor.sun_next_dawn
+            name: Next dawn
+          - entity: sensor.sun_next_dusk
+            name: Next dusk
+          - entity: sensor.sun_next_midnight
+            name: Next midnight
+          - entity: sensor.sun_next_noon
+            name: Next noon
+          - entity: sensor.sun_next_rising
+            name: Next rising
+          - entity: sensor.sun_next_setting
+            name: Next setting
+        title: Sun
+  - title: Google
+    path: google
+    icon: mdi:google
+    layout:
+      width: 200
+      max_cols: 10
+    type: custom:masonry-layout
+    badges: []
+    cards:
+      - type: media-control
+        entity: media_player.all
+      - type: media-control
+        entity: media_player.command_center_speaker_2
+      - type: media-control
+        entity: media_player.guest_bedroom_speaker
+      - type: media-control
+        entity: media_player.hallway_speaker
+  - title: Lights
+    path: lights
+    icon: mdi:ceiling-light-outline
+    badges: []
+    cards:
+      - type: light
+        entity: light.wiz_rgbw_tunable_4ed9de
+  - title: weather
+    path: weather
+    icon: mdi:weather-sunny-alert
+    badges: []
+    cards:
+      - show_current: true
+        show_forecast: true
+        type: weather-forecast
+        entity: weather.openweathermap
+        name: weather
