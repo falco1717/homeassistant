@@ -6,8 +6,8 @@ sidebar:
   digitalClock: true
   twelveHourVersion: true
   period: true
-  hideHassSidebar: false
-  hideTopMenu: false
+  hideHassSidebar: true
+  hideTopMenu: true
   showTopMenuOnMobile: true
   width:
     mobile: 0
