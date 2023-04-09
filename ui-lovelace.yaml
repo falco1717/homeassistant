@@ -6,8 +6,8 @@ sidebar:
   digitalClock: true
   twelveHourVersion: true
   period: true
-  hideHassSidebar: true
-  hideTopMenu: true
+  hideHassSidebar: false
+  hideTopMenu: false
   showTopMenuOnMobile: true
   width:
     mobile: 0
@@ -33,7 +33,7 @@ sidebar:
       active: true
       icon: mdi:lightbulb
     - action: navigate
-      navigation_path: /sidebar-test/1st-Floor
+      navigation_path: /dashboard-test/1st-floor
       name: 1st Floor
       active: true
       icon: mdi:floor-plan
@@ -42,6 +42,11 @@ sidebar:
       name: 2nd Floor
       active: true
       icon: mdi:stairs-up
+    - action: navigate
+      navigation_path: /dashboard-test/cameras
+      name: Cameras
+      active: true
+      icon: mdi:cctv
     - action: navigate
       navigation_path: /dashboard-test/media
       name: Media
@@ -80,29 +85,82 @@ sidebar:
        {% else %}
         All lights are off
       {% endif %}
-      {% if states.binary_sensor |
-         selectattr('state','eq','on')|selectattr('attributes.device_class', 'eq', 'door')|
-         rejectattr('attributes.friendly_name','eq','Visonic Door/Window Sensor contact' ) | list | count
-       == 1 %}
-        and a door open
-       {% elif states.binary_sensor |
-         selectattr('state','eq','on')|selectattr('attributes.device_class', 'eq', 'door')|
-         rejectattr('attributes.friendly_name','eq','Visonic Door/Window Sensor contact' ) | list | count
-       > 1 %}
-         and {{ states.binary_sensor |
-        selectattr('state','eq','on')|selectattr('attributes.device_class', 'eq', 'door')|
-        rejectattr('attributes.friendly_name','eq','Visonic Door/Window Sensor contact' ) | list | count
-         }} doors open
-       {% else %}
-        and all doors are closed
-      {% endif %}
     </li>
   bottomCard:
-    type: custom:weather-card
+    type: custom:layout-card
+    layout_type: custom:vertical-layout
+    layout:
+      max_cols: 1
+    cardStyle: |
+      :host {
+        width: 100% !important;
+        position: absolute;
+        bottom: 0%;
+        left: 0%; 
+      }
+      .column.cards {
+        max-width: 100% !important;
+      }
+      .cards > :last-child {
+        margin: 0px !important;
+      }
     cardOptions:
-      number_of_forecasts: '5'
-      details: false
-      entity: weather.openweathermap
+      cards:
+        - type: custom:simple-weather-card
+          backdrop: false
+          entity: weather.openweathermap
+          name: ' '
+          tap_action:
+            action: navigate
+            navigation_path: /lovelace/meteo
+          style: |
+            ha-card {
+              background: none  !important;
+              box-shadow: none !important;
+              padding: 0 !important;
+              margin: 4px;
+              font-size: 1vw;
+            }        
+        - type: custom:mini-graph-card
+          tap_action:
+            action: none
+          show:
+            icon: false
+            legend: false
+            name: false
+          entities:
+            - sensor.openweathermap_temperature
+          font_size: 35
+          update_interval: 15
+          font_size_header: 9
+          hours_to_show: 24
+          points_per_hour: 1
+          icon: mdi:home-thermometer-outline
+          color_thresholds:
+            - color: '#4dd2ff'
+              value: 0
+            - color: '#ffa31a'
+              value: 20
+            - color: '#ff1a1a'
+              value: 0
+          style: |
+            ha-card, ha-card > div {
+              padding: 0px !important;
+
+            }
+            ha-card > .header.flex > div, ha-card > .states.flex > div {
+              padding: 5px !important;
+              font-weight: 500;
+            } 
+            ha-card > .info.flex > .info__item > .info__item__time {
+              display: none;
+            }
+            ha-card {
+              background-color: rgba(40,40,40,0);
+            }
+            .name > span {
+              font-weight: 500 !important;
+            }
 views:
   - path: home
     title: Home
@@ -163,26 +221,106 @@ views:
     path: google
     icon: mdi:google
     layout:
-      width: 200
-      max_cols: 10
-    type: custom:masonry-layout
+      margin: 0
+      gridrows: auto
+      grid-template-columns: repeat(4, 1fr) 0
+      grid-template-rows: 0 repeat(2, fit-content(100%)) 0fr
+      grid-template-areas: |
+        "sidebar  .           .       .       ."
+        "sidebar  Master      Living  Office  ."
+        "sidebar  Kitchen     Rachel  Guest   ."
+        "sidebar  footer      footer  footer  ."
+    type: custom:grid-layout
     badges: []
     cards:
-      - type: media-control
-        entity: media_player.all
-      - type: media-control
-        entity: media_player.command_center_speaker_2
-      - type: media-control
-        entity: media_player.guest_bedroom_speaker
-      - type: media-control
-        entity: media_player.hallway_speaker
+      - square: false
+        type: grid
+        title: Master Bedroom
+        cards:
+          - show_name: true
+            show_icon: true
+            type: light
+            tap_action:
+              action: toggle
+            entity: light.master_bedroom_lights
+          - type: light
+            entity: light.master_lamps
+          - type: light
+            entity: light.ceiling_lights
+          - type: media-control
+            entity: media_player.master_bedroom
+        columns: 2
+        view_layout:
+          grid-area: Master
+      - square: false
+        type: grid
+        title: Living Room
+        cards:
+          - type: light
+            entity: light.living_room_lights
+          - type: media-control
+            entity: media_player.living_room_tv
+          - type: vertical-stack
+            cards:
+              - type: weather-forecast
+                entity: weather.openweathermap
+        columns: 2
+        view_layout:
+          grid-area: Living
+      - type: custom:layout-card
+        column_num: 2
+        max_columns: 2
+        column_width:
+          - 35%
+          - 65%
+        layout: vertical
+        cards:
+          - type: markdown
+            title: TP-Link TL-WDR3600 Router
+            content: ' '
+          - type: horizontal-stack
+            cards:
+              - type: glance
+                title: Sent
+                columns: 1
+                entities:
+                  - entity: sensor.wireless_router_tl_wdr3600_kbyte_sec_sent
+                    name: Kilobytes/second
+                  - entity: sensor.wireless_router_tl_wdr3600_bytes_sent
+                    name: Total Bytes
+                  - entity: sensor.wireless_router_tl_wdr3600_packets_sec_sent
+                    name: Packets/second
+                  - entity: sensor.wireless_router_tl_wdr3600_packets_sent
+                    name: Total Packets
+              - type: glance
+                columns: 1
+                title: Received
+                entities:
+                  - entity: sensor.wireless_router_tl_wdr3600_kbyte_sec_received
+                    name: Kilobytes/second
+                  - entity: sensor.wireless_router_tl_wdr3600_bytes_received
+                    name: Total Bytes
+                  - entity: sensor.wireless_router_tl_wdr3600_packets_sec_received
+                    name: Packets/second
+                  - entity: sensor.wireless_router_tl_wdr3600_packets_received
+                    name: Total Packets
   - title: Lights
     path: lights
     icon: mdi:ceiling-light-outline
     badges: []
     cards:
       - type: light
-        entity: light.wiz_rgbw_tunable_4ed9de
+        entity: light.master_bedroom_lights
+      - type: light
+        entity: light.living_room_lights
+      - type: light
+        entity: light.jordan_lamp
+      - type: light
+        entity: light.wiz_rachel_lamp
+      - type: light
+        entity: light.bedroom_light_1
+      - type: light
+        entity: light.bedroom_light_2
   - title: weather
     path: weather
     icon: mdi:weather-sunny-alert
@@ -193,3 +331,60 @@ views:
         type: weather-forecast
         entity: weather.openweathermap
         name: weather
+  - title: 1st Floor
+    path: 1st-floor
+    icon: mdi:floor-plan
+    badges: []
+    cards: []
+  - title: 2nd Floor
+    path: 2nd-floor
+    icon: mdi:stairs-up
+    badges: []
+    cards:
+      - type: entities
+        entities:
+          - entity: camera.camera_1_camera_1
+        title: camera
+      - camera_view: auto
+        type: picture-glance
+        entities: []
+        camera_image: camera.camera_1_camera_1
+        title: camera
+  - title: Cameras
+    path: cameras
+    icon: mdi:cctv
+    badges: []
+    cards:
+      - show_state: true
+        show_name: true
+        camera_view: auto
+        type: picture-entity
+        entity: camera.camera_1_camera_1
+        name: Camera-1
+        camera_image: camera.camera_1_camera_1
+      - show_state: true
+        show_name: true
+        camera_view: live
+        type: picture-entity
+        entity: camera.camera_2_camera_2
+        name: Camera-2
+        camera_image: camera.camera_2_camera_2
+      - show_state: true
+        show_name: true
+        camera_view: live
+        type: picture-entity
+        entity: camera.camera_3_camera_3
+        name: Camera-3
+        camera_image: camera.camera_3_camera_3
+      - show_state: true
+        show_name: true
+        camera_view: live
+        type: picture-entity
+        entity: camera.front_door
+        camera_image: camera.front_door
+        aspect_ratio: '16:9'
+  - title: Media
+    path: media
+    icon: mdi:television-play
+    badges: []
+    cards: []
